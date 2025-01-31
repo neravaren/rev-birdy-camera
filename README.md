@@ -23,3 +23,15 @@ Detect bird on camera, checks if image is blurred, and save valid images.
 - Create test.py: Extract test functionality from `analysis.py` and add it to `test.py` as methods that are run locally.
 - Update test.py: Colorize output for bird found false or true, to be green or red.
 - Update test.py: Print in red for blurry detection true, and green for blurry false.
+
+## Commands
+```bash
+uv run python main.py --display --verbose
+uv run python test.py
+uv run python gallery.py
+```
+
+## Forward from WSL
+```cmd
+netsh interface portproxy add v4tov4 listenport=5001 listenaddress=0.0.0.0 connectport=5000 connectaddress=172.26.248.204
+```
