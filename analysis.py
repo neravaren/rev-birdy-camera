@@ -21,25 +21,5 @@ def contains_bird(image):
     return False
 
 if __name__ == "__main__":
-    # Test image analysis functions
-    test_image_path = "test.jpg"
-    if not os.path.exists(test_image_path):
-        print(f"Error: Test image {test_image_path} not found!")
-        exit(1)
-
-    # Load and analyze test image
-    image = cv2.imread(test_image_path)
-    if image is None:
-        print(f"Error: Could not load image {test_image_path}")
-        exit(1)
-
-    # Test blur detection
-    blur_threshold = 100
-    is_blur = is_blurred(image, blur_threshold)
-    print(f"Image blur test (threshold={blur_threshold}):")
-    print(f"  Is blurry: {is_blur}")
-
-    # Test bird detection
-    has_bird = contains_bird(image)
-    print("\nBird detection test:")
-    print(f"  Contains bird: {has_bird}")
+    print("This module provides image analysis functions.")
+    print("Run test.py to test the functionality.")
