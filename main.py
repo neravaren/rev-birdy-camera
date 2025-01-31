@@ -36,7 +36,7 @@ def capture_image():
     return None
 
 
-def print_timed(message, verbose_only=False, args=None):
+def log(message, verbose_only=False, args=None):
     """Print a message with timestamp prefix if verbose conditions are met."""
     if not verbose_only or (args and args.verbose):
         print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {message}")
@@ -65,7 +65,7 @@ def main():
 
     checks_performed = 0
     while args.checks is None or checks_performed < args.checks:
-        print_timed("Capturing image...", verbose_only=True, args=args)
+        log("Capturing image...", verbose_only=True, args=args)
         image = capture_image()
         if image is not None:
             if args.display:
@@ -74,21 +74,21 @@ def main():
                 # Update window size to match the resized image aspect ratio
                 cv2.resizeWindow('Bird Detection', DISPLAY_WIDTH, display_image.shape[0])
                 cv2.waitKey(1)
-            print_timed("Checking image quality...", verbose_only=True, args=args)
+            log("Checking image quality...", verbose_only=True, args=args)
             if not is_blurred(image, BLUR_THRESHOLD):
-                print_timed("Image is clear, checking for birds...", verbose_only=True, args=args)
+                log("Image is clear, checking for birds...", verbose_only=True, args=args)
                 if contains_bird(image):
-                    print_timed("Bird detected! Saving image...")  # Always print detection
+                    log("Bird detected! Saving image...")  # Always print detection
                     save_image(image)
                 else:
-                    print_timed("No birds detected", verbose_only=True, args=args)
+                    log("No birds detected", verbose_only=True, args=args)
             else:
-                print_timed("Image too blurry, skipping", verbose_only=True, args=args)
+                log("Image too blurry, skipping", verbose_only=True, args=args)
         checks_performed += 1
         is_last_check = args.checks is not None and checks_performed >= args.checks
 
         if not is_last_check:
-            print_timed(f"Waiting {CAPTURE_INTERVAL} seconds...", verbose_only=True, args=args)
+            log(f"Waiting {CAPTURE_INTERVAL} seconds...", verbose_only=True, args=args)
             time.sleep(CAPTURE_INTERVAL)
 
     if args.display:
