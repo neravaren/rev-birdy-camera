@@ -5,10 +5,14 @@ from ultralytics import YOLO
 # Load YOLOv8 model
 model = YOLO("yolov8n.pt")
 
+def get_variance(image):
+    """Calculate the Laplacian variance of an image."""
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    return cv2.Laplacian(gray, cv2.CV_64F).var()
+
 def is_blurred(image, threshold):
     """Check if the image is blurry using the Laplacian method."""
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    variance = cv2.Laplacian(gray, cv2.CV_64F).var()
+    variance = get_variance(image)
     return variance < threshold
 
 def contains_bird(image):
