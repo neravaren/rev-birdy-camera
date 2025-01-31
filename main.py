@@ -14,7 +14,7 @@ load_dotenv()
 # Configuration
 ESP32_CAMERA_URL = os.getenv("ESP32_CAMERA_URL", "http://10.2.1.143/capture")
 SAVE_DIR = os.getenv("SAVE_DIR", "captured_birds")
-BLUR_THRESHOLD = int(os.getenv("BLUR_THRESHOLD", "100"))
+BLUR_THRESHOLD = float(os.getenv("BLUR_THRESHOLD", "90"))
 CAPTURE_INTERVAL = int(os.getenv("CAPTURE_INTERVAL", "5"))
 DISPLAY_WIDTH = int(os.getenv("DISPLAY_WIDTH", "800"))  # Width in pixels for display window
 
