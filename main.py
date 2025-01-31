@@ -4,9 +4,9 @@ import time
 import os
 import argparse
 from datetime import datetime
-from ultralytics import YOLO
 import numpy as np
 from dotenv import load_dotenv
+from analysis import is_blurred, contains_bird
 
 # Load environment variables
 load_dotenv()
@@ -18,8 +18,6 @@ BLUR_THRESHOLD = int(os.getenv("BLUR_THRESHOLD", "100"))
 CAPTURE_INTERVAL = int(os.getenv("CAPTURE_INTERVAL", "5"))
 DISPLAY_WIDTH = int(os.getenv("DISPLAY_WIDTH", "800"))  # Width in pixels for display window
 
-# Load YOLOv8 model
-model = YOLO("yolov8n.pt")
 
 # Ensure save directory exists
 os.makedirs(SAVE_DIR, exist_ok=True)
@@ -37,24 +35,11 @@ def capture_image():
         print(f"Error fetching image: {e}")
     return None
 
-def is_blurred(image):
-    """Check if the image is blurry using the Laplacian method."""
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    variance = cv2.Laplacian(gray, cv2.CV_64F).var()
-    return variance < BLUR_THRESHOLD
 
-def contains_bird(image):
-    """Check if the image contains a bird using YOLOv8."""
-    results = model(image, verbose=False)
-    for r in results:
-        for box in r.boxes:
-            if int(box.cls) == 16:  # COCO class ID for bird
-                return True
-    return False
-
-def print_timed(message):
-    """Print a message with timestamp prefix."""
-    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {message}")
+def print_timed(message, verbose_only=False, args=None):
+    """Print a message with timestamp prefix if verbose conditions are met."""
+    if not verbose_only or (args and args.verbose):
+        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {message}")
 
 def resize_image(image, width):
     """Resize image maintaining aspect ratio."""
@@ -71,6 +56,7 @@ def main():
     parser = argparse.ArgumentParser(description='Bird detection from ESP32 camera')
     parser.add_argument('--checks', type=int, help='Number of checks to perform (default: infinite)', default=None)
     parser.add_argument('--display', action='store_true', help='Display captured images in window')
+    parser.add_argument('--verbose', action='store_true', help='Enable verbose logging')
     args = parser.parse_args()
 
     if args.display:
@@ -79,7 +65,7 @@ def main():
 
     checks_performed = 0
     while args.checks is None or checks_performed < args.checks:
-        print_timed("Capturing image...")
+        print_timed("Capturing image...", verbose_only=True, args=args)
         image = capture_image()
         if image is not None:
             if args.display:
@@ -88,21 +74,21 @@ def main():
                 # Update window size to match the resized image aspect ratio
                 cv2.resizeWindow('Bird Detection', DISPLAY_WIDTH, display_image.shape[0])
                 cv2.waitKey(1)
-            print_timed("Checking image quality...")
-            if not is_blurred(image):
-                print_timed("Image is clear, checking for birds...")
+            print_timed("Checking image quality...", verbose_only=True, args=args)
+            if not is_blurred(image, BLUR_THRESHOLD):
+                print_timed("Image is clear, checking for birds...", verbose_only=True, args=args)
                 if contains_bird(image):
-                    print_timed("Bird detected! Saving image...")
+                    print_timed("Bird detected! Saving image...")  # Always print detection
                     save_image(image)
                 else:
-                    print_timed("No birds detected")
+                    print_timed("No birds detected", verbose_only=True, args=args)
             else:
-                print_timed("Image too blurry, skipping")
+                print_timed("Image too blurry, skipping", verbose_only=True, args=args)
         checks_performed += 1
         is_last_check = args.checks is not None and checks_performed >= args.checks
-        
+
         if not is_last_check:
-            print_timed(f"Waiting {CAPTURE_INTERVAL} seconds...")
+            print_timed(f"Waiting {CAPTURE_INTERVAL} seconds...", verbose_only=True, args=args)
             time.sleep(CAPTURE_INTERVAL)
 
     if args.display:
