@@ -2,13 +2,20 @@ import cv2
 import requests
 import time
 import os
+import argparse
+from datetime import datetime
 from ultralytics import YOLO
+import numpy as np
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Configuration
-ESP32_CAMERA_URL = "http://10.2.1.143/capture"  # Change this to your ESP32 Camera URL
-SAVE_DIR = "captured_birds"
-BLUR_THRESHOLD = 100
-CAPTURE_INTERVAL = 5  # Seconds
+ESP32_CAMERA_URL = os.getenv("ESP32_CAMERA_URL", "http://10.2.1.143/capture")
+SAVE_DIR = os.getenv("SAVE_DIR", "captured_birds")
+BLUR_THRESHOLD = int(os.getenv("BLUR_THRESHOLD", "100"))
+CAPTURE_INTERVAL = int(os.getenv("CAPTURE_INTERVAL", "5"))
 
 # Load YOLOv8 model
 model = YOLO("yolov8n.pt")
@@ -37,12 +44,16 @@ def is_blurred(image):
 
 def contains_bird(image):
     """Check if the image contains a bird using YOLOv8."""
-    results = model(image)
+    results = model(image, verbose=False)
     for r in results:
         for box in r.boxes:
             if int(box.cls) == 16:  # COCO class ID for bird
                 return True
     return False
+
+def print_timed(message):
+    """Print a message with timestamp prefix."""
+    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {message}")
 
 def save_image(image):
     """Save image with timestamp."""
@@ -51,12 +62,31 @@ def save_image(image):
     print(f"Saved: {filename}")
 
 def main():
-    while True:
+    parser = argparse.ArgumentParser(description='Bird detection from ESP32 camera')
+    parser.add_argument('--checks', type=int, help='Number of checks to perform (default: infinite)', default=None)
+    args = parser.parse_args()
+
+    checks_performed = 0
+    while args.checks is None or checks_performed < args.checks:
+        print_timed("Capturing image...")
         image = capture_image()
         if image is not None:
-            if not is_blurred(image) and contains_bird(image):
-                save_image(image)
-        time.sleep(CAPTURE_INTERVAL)
+            print_timed("Checking image quality...")
+            if not is_blurred(image):
+                print_timed("Image is clear, checking for birds...")
+                if contains_bird(image):
+                    print_timed("Bird detected! Saving image...")
+                    save_image(image)
+                else:
+                    print_timed("No birds detected")
+            else:
+                print_timed("Image too blurry, skipping")
+        checks_performed += 1
+        is_last_check = args.checks is not None and checks_performed >= args.checks
+        
+        if not is_last_check:
+            print_timed(f"Waiting {CAPTURE_INTERVAL} seconds...")
+            time.sleep(CAPTURE_INTERVAL)
 
 if __name__ == "__main__":
     main()
