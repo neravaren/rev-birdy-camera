@@ -1,6 +1,6 @@
 import cv2
 import os
-from analysis import is_blurred, contains_bird
+from analysis import analyze_blur, analyze_bird
 
 # ANSI color codes
 GREEN = '\033[92m'
@@ -18,16 +18,17 @@ def test_single_image(image_path, blur_threshold=100):
         return False
     
     # Test blur detection
-    is_blur = is_blurred(image, blur_threshold)
+    blur_analysis = analyze_blur(image, blur_threshold)
     print(f"Image blur test (threshold={blur_threshold}):")
-    color = RED if is_blur else GREEN
-    print(f"  Is blurry: {color}{is_blur}{RESET}")
+    color = RED if blur_analysis["is_blurred"] else GREEN
+    print(f"  Is blurry: {color}{blur_analysis['is_blurred']}{RESET}")
+    print(f"  Variance: {blur_analysis['variance']:.2f}")
 
     # Test bird detection
-    has_bird = contains_bird(image)
+    bird_analysis = analyze_bird(image)
     print("Bird detection test:")
-    color = GREEN if has_bird else RED
-    print(f"  Contains bird: {color}{has_bird}{RESET}")
+    color = GREEN if bird_analysis["contains_bird"] else RED
+    print(f"  Contains bird: {color}{bird_analysis['contains_bird']}{RESET}")
     
     return True
 

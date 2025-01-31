@@ -6,7 +6,7 @@ import argparse
 from datetime import datetime
 import numpy as np
 from dotenv import load_dotenv
-from analysis import is_blurred, contains_bird, get_variance
+from analysis import analyze_blur, analyze_bird
 
 # Load environment variables
 load_dotenv()
@@ -77,16 +77,17 @@ def main():
                 cv2.resizeWindow('Bird Detection', DISPLAY_WIDTH, display_image.shape[0])
                 cv2.waitKey(1)
             log("Checking image quality...", verbose_only=True, args=args)
-            variance = get_variance(image)
-            if not is_blurred(image, BLUR_THRESHOLD):
+            blur_analysis = analyze_blur(image, BLUR_THRESHOLD)
+            if not blur_analysis["is_blurred"]:
                 log("Image is clear, checking for birds...", verbose_only=True, args=args)
-                if contains_bird(image):
+                bird_analysis = analyze_bird(image)
+                if bird_analysis["contains_bird"]:
                     log("Bird detected! Saving image...")  # Always print detection
                     save_image(image)
                 else:
                     log("No birds detected", verbose_only=True, args=args)
             else:
-                log(f"Image too blurry (variance: {variance:.2f}), skipping", verbose_only=True, args=args)
+                log(f"Image too blurry (variance: {blur_analysis['variance']:.2f}), skipping", verbose_only=True, args=args)
         checks_performed += 1
         is_last_check = args.checks is not None and checks_performed >= args.checks
 
