@@ -46,6 +46,32 @@ def resize_image(image, width):
     height = int(image.shape[0] * (width / image.shape[1]))
     return cv2.resize(image, (width, height))
 
+def draw_detections(image, results):
+    """Draw detection boxes and labels on the image."""
+    annotated_image = image.copy()
+    for r in results:
+        boxes = r.boxes
+        for box in boxes:
+            # Get box coordinates
+            x1, y1, x2, y2 = box.xyxy[0]
+            x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+            
+            # Get class and confidence
+            cls = int(box.cls[0])
+            conf = float(box.conf[0])
+            
+            # Draw box
+            color = (0, 255, 0) if cls == 14 else (0, 165, 255)  # Green for birds, orange for others
+            cv2.rectangle(annotated_image, (x1, y1), (x2, y2), color, 2)
+            
+            # Add label
+            label = f"{r.names[cls]} {conf:.2f}"
+            (label_width, label_height), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+            cv2.rectangle(annotated_image, (x1, y1-label_height-5), (x1+label_width, y1), color, -1)
+            cv2.putText(annotated_image, label, (x1, y1-5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+    
+    return annotated_image
+
 def save_image(image):
     """Save image with timestamp."""
     filename = os.path.join(SAVE_DIR, f"bird_{int(time.time())}.jpg")
@@ -71,7 +97,10 @@ def main():
         image = capture_image()
         if image is not None:
             if args.display:
-                display_image = resize_image(image.copy(), DISPLAY_WIDTH)
+                display_image = image.copy()
+                bird_analysis = analyze_bird(image)
+                display_image = draw_detections(display_image, bird_analysis["results"])
+                display_image = resize_image(display_image, DISPLAY_WIDTH)
                 cv2.imshow('Bird Detection', display_image)
                 # Update window size to match the resized image aspect ratio
                 cv2.resizeWindow('Bird Detection', DISPLAY_WIDTH, display_image.shape[0])
@@ -81,6 +110,16 @@ def main():
             if not blur_analysis["is_blurred"]:
                 log("Image is clear, checking for birds...", verbose_only=True, args=args)
                 bird_analysis = analyze_bird(image)
+                
+                if args.display:
+                    display_image = image.copy()
+                    display_image = draw_detections(display_image, bird_analysis["results"])
+                    display_image = resize_image(display_image, DISPLAY_WIDTH)
+                    cv2.imshow('Bird Detection', display_image)
+                    # Update window size to match the resized image aspect ratio
+                    cv2.resizeWindow('Bird Detection', DISPLAY_WIDTH, display_image.shape[0])
+                    cv2.waitKey(1)
+                
                 if bird_analysis["contains_bird"]:
                     log("Bird detected! Saving image...")  # Always print detection
                     save_image(image)
