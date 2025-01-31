@@ -23,6 +23,14 @@ Detect bird on camera, checks if image is blurred, and save valid images.
 - Create test.py: Extract test functionality from `analysis.py` and add it to `test.py` as methods that are run locally.
 - Update test.py: Colorize output for bird found false or true, to be green or red.
 - Update test.py: Print in red for blurry detection true, and green for blurry false.
+- Update gallery.py: when reading image directory parse image names. Split timestamp part from name, order files from newst to oldest. Output only newest 25 images on page. Support pagination for older one.
+- Update main.py: Write BLUR_THRESHOLD and CAPTURE_INTERVAL values on start to console.
+- Update analysis.py: create `get_variance()` method based on `is_blurred()`. Use get_variance inside is_blurred method.
+- Update main.py: is image is blurred, also log it variance to console.
+- Bind flask server to 0.0.0.0
+- Update gallery.py: Extract image reading from folder to separate function.
+- Update gallery.py: Add parameters to get_image_files for pagination.
+- Sort images in get_image_files from newest to oldest.
 
 ## Commands
 ```bash
