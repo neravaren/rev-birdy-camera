@@ -20,7 +20,8 @@ def test_single_image(image_path, blur_threshold=100):
     # Test blur detection
     is_blur = is_blurred(image, blur_threshold)
     print(f"Image blur test (threshold={blur_threshold}):")
-    print(f"  Is blurry: {is_blur}")
+    color = RED if is_blur else GREEN
+    print(f"  Is blurry: {color}{is_blur}{RESET}")
 
     # Test bird detection
     has_bird = contains_bird(image)

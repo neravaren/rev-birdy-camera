@@ -13,10 +13,15 @@ def is_blurred(image, threshold):
 
 def contains_bird(image):
     """Check if the image contains a bird using YOLOv8."""
-    results = model(image, verbose=False)
+    results = model(
+        source=image,
+        conf=0.2,
+        iou=0.5,
+        verbose=False,
+    )
     for r in results:
         for box in r.boxes:
-            if int(box.cls) == 16:  # COCO class ID for bird
+            if int(box.cls) == 14:  # COCO class ID for bird
                 return True
     return False
 
