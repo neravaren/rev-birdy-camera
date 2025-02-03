@@ -6,23 +6,29 @@
     <title>Image Gallery</title>
 </head>
 <body>
-    <h1>Image Gallery</h1>
+    <h1><a href="/">Image Gallery</a></h1>
     <div class="gallery">
         {% for image in images %}
-            <img src="{{ url_for('serve_image', filename=image) }}" alt="{{ image }}" width="200">
+            <a data-fslightbox="gallery" href="{{url_for('serve_image_cat' if cat else 'serve_image', filename=image)}}">
+              <img src="{{ url_for('serve_image_cat' if cat else 'serve_image', filename=image) }}" alt="{{ image }}" width="350">
+            </a>
+            <!-- <a data-fslightbox="gallery" href="images/{{image}}">
+                <img src="images/{{image}}" alt="{{ image }}" width="350">
+            </a> -->
         {% endfor %}
     </div>
     
     <div class="pagination">
         {% if current_page > 1 %}
-            <a href="{{ url_for('gallery', page=current_page-1) }}">Previous</a>
+            <a href="{{ url_for('gallery', page=current_page-1, cat=cat) }}">Previous</a>
         {% endif %}
         
         <span>Page {{ current_page }} of {{ total_pages }}</span>
         
         {% if current_page < total_pages %}
-            <a href="{{ url_for('gallery', page=current_page+1) }}">Next</a>
+            <a href="{{ url_for('gallery', page=current_page+1, cat=cat) }}">Next</a>
         {% endif %}
     </div>
 </body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fslightbox/3.0.9/index.js"></script>
 </html>

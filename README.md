@@ -41,5 +41,6 @@ uv run python gallery.py
 
 ## Forward from WSL
 ```cmd
+netsh interface portproxy show v4tov4
 netsh interface portproxy add v4tov4 listenport=5001 listenaddress=0.0.0.0 connectport=5000 connectaddress=172.26.248.204
 ```

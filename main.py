@@ -12,15 +12,17 @@ from analysis import analyze_blur, analyze_bird
 load_dotenv()
 
 # Configuration
-ESP32_CAMERA_URL = os.getenv("ESP32_CAMERA_URL", "http://10.2.1.143/capture")
+ESP32_CAMERA_URL = os.getenv("ESP32_CAMERA_URL", "http://10.2.1.146/capture")
 SAVE_DIR = os.getenv("SAVE_DIR", "captured_birds")
-BLUR_THRESHOLD = float(os.getenv("BLUR_THRESHOLD", "90"))
+SAVE_CAT_DIR = os.getenv("SAVE_CAT_DIR", "captured_birds_cat")
+BLUR_THRESHOLD = float(os.getenv("BLUR_THRESHOLD", "50"))
 CAPTURE_INTERVAL = int(os.getenv("CAPTURE_INTERVAL", "5"))
 DISPLAY_WIDTH = int(os.getenv("DISPLAY_WIDTH", "800"))  # Width in pixels for display window
 
 
 # Ensure save directory exists
 os.makedirs(SAVE_DIR, exist_ok=True)
+os.makedirs(SAVE_CAT_DIR, exist_ok=True)
 
 def capture_image():
     """Fetch image from ESP32 Camera."""
@@ -72,9 +74,9 @@ def draw_detections(image, results):
     
     return annotated_image
 
-def save_image(image):
+def save_image(image, target_dir=SAVE_DIR, suffix=""):
     """Save image with timestamp."""
-    filename = os.path.join(SAVE_DIR, f"bird_{int(time.time())}.jpg")
+    filename = os.path.join(target_dir, f"bird_{int(time.time())}{suffix}.jpg")
     cv2.imwrite(filename, image)
     print(f"Saved: {filename}")
 
@@ -113,8 +115,8 @@ def main():
                 
                 if args.display:
                     display_image = image.copy()
-                    display_image = draw_detections(display_image, bird_analysis["results"])
-                    display_image = resize_image(display_image, DISPLAY_WIDTH)
+                    display_image_mark = draw_detections(display_image, bird_analysis["results"])
+                    display_image = resize_image(display_image_mark, DISPLAY_WIDTH)
                     cv2.imshow('Bird Detection', display_image)
                     # Update window size to match the resized image aspect ratio
                     cv2.resizeWindow('Bird Detection', DISPLAY_WIDTH, display_image.shape[0])
@@ -123,6 +125,7 @@ def main():
                 if bird_analysis["contains_bird"]:
                     log("Bird detected! Saving image...")  # Always print detection
                     save_image(image)
+                    save_image(display_image_mark, target_dir=SAVE_CAT_DIR, suffix=".cat")
                 else:
                     log("No birds detected", verbose_only=True, args=args)
             else:
