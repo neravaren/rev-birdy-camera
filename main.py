@@ -17,6 +17,7 @@ SAVE_DIR = os.getenv("SAVE_DIR", "captured_birds")
 SAVE_CAT_DIR = os.getenv("SAVE_CAT_DIR", "captured_birds_cat")
 BLUR_THRESHOLD = float(os.getenv("BLUR_THRESHOLD", "50"))
 CAPTURE_INTERVAL = int(os.getenv("CAPTURE_INTERVAL", "5"))
+BIRD_INTERVAL = int(os.getenv("BIRD_INTERVAL", "5"))
 DISPLAY_WIDTH = int(os.getenv("DISPLAY_WIDTH", "800"))  # Width in pixels for display window
 DO_SAVE_CAT = os.getenv("DO_SAVE_CAT", "True").lower() == "true"
 
@@ -137,8 +138,9 @@ def main():
         is_last_check = args.checks is not None and checks_performed >= args.checks
 
         if not is_last_check:
-            log(f"Waiting {CAPTURE_INTERVAL} seconds...", verbose_only=True, args=args)
-            time.sleep(CAPTURE_INTERVAL)
+            wait_time = BIRD_INTERVAL if bird_analysis["contains_bird"] else CAPTURE_INTERVAL
+            log(f"Waiting {wait_time} seconds...", verbose_only=True, args=args)
+            time.sleep(wait_time)
 
     if args.display:
         cv2.destroyAllWindows()
