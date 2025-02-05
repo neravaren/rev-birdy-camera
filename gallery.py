@@ -1,9 +1,12 @@
 from flask import Flask, render_template, send_from_directory, request
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 app = Flask(__name__)
 IMAGE_FOLDER = "captured_birds"  # Directory to store images
 IMAGE_CAT_FOLDER = "captured_birds_cat"
+GALLERY_PORT = int(os.getenv("GALLERY_PORT", "5000"))
 
 # Ensure the image folder exists
 if not os.path.exists(IMAGE_FOLDER):
@@ -57,4 +60,4 @@ def serve_image_cat(filename):
     return send_from_directory(IMAGE_CAT_FOLDER, filename)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', port=GALLERY_PORT, debug=True)
