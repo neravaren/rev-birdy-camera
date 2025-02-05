@@ -18,6 +18,7 @@ SAVE_CAT_DIR = os.getenv("SAVE_CAT_DIR", "captured_birds_cat")
 BLUR_THRESHOLD = float(os.getenv("BLUR_THRESHOLD", "50"))
 CAPTURE_INTERVAL = int(os.getenv("CAPTURE_INTERVAL", "5"))
 DISPLAY_WIDTH = int(os.getenv("DISPLAY_WIDTH", "800"))  # Width in pixels for display window
+DO_SAVE_CAT = os.getenv("DO_SAVE_CAT", "True").lower() == "true"
 
 
 # Ensure save directory exists
@@ -36,7 +37,6 @@ def capture_image():
     except requests.RequestException as e:
         print(f"Error fetching image: {e}")
     return None
-
 
 def log(message, verbose_only=False, args=None):
     """Print a message with timestamp prefix if verbose conditions are met."""
@@ -97,39 +97,42 @@ def main():
     while args.checks is None or checks_performed < args.checks:
         log("Capturing image...", verbose_only=True, args=args)
         image = capture_image()
-        if image is not None:
-            if args.display:
-                display_image = image.copy()
-                bird_analysis = analyze_bird(image)
-                display_image = draw_detections(display_image, bird_analysis["results"])
-                display_image = resize_image(display_image, DISPLAY_WIDTH)
-                cv2.imshow('Bird Detection', display_image)
-                # Update window size to match the resized image aspect ratio
-                cv2.resizeWindow('Bird Detection', DISPLAY_WIDTH, display_image.shape[0])
-                cv2.waitKey(1)
-            log("Checking image quality...", verbose_only=True, args=args)
-            blur_analysis = analyze_blur(image, BLUR_THRESHOLD)
+        if image is None:
+            continue
+
+        # Check image quality
+        log("Checking image quality...", verbose_only=True, args=args)
+        blur_analysis = analyze_blur(image, BLUR_THRESHOLD)
+        if blur_analysis["is_blurred"]:
+            log(f"Image is blurry (variance: {blur_analysis['variance']:.2f})", verbose_only=True, args=args)
+        else:
+            log("Image is clear", verbose_only=True, args=args)
+
+        # Analyze for birds
+        log("Checking for birds...", verbose_only=True, args=args)
+        bird_analysis = analyze_bird(image)
+
+        # Prepare display image with detections
+        display_image = image.copy()
+        display_image_marked = draw_detections(display_image, bird_analysis["results"])
+
+        # Display if requested
+        if args.display:
+            display_sized = resize_image(display_image_marked, DISPLAY_WIDTH)
+            cv2.imshow('Bird Detection', display_sized)
+            cv2.resizeWindow('Bird Detection', DISPLAY_WIDTH, display_sized.shape[0])
+            cv2.waitKey(1)
+
+        # Handle detection results
+        if bird_analysis["contains_bird"]:
+            log("Bird detected!", verbose_only=True, args=args)
             if not blur_analysis["is_blurred"]:
-                log("Image is clear, checking for birds...", verbose_only=True, args=args)
-                bird_analysis = analyze_bird(image)
-                
-                if args.display:
-                    display_image = image.copy()
-                    display_image_mark = draw_detections(display_image, bird_analysis["results"])
-                    display_image = resize_image(display_image_mark, DISPLAY_WIDTH)
-                    cv2.imshow('Bird Detection', display_image)
-                    # Update window size to match the resized image aspect ratio
-                    cv2.resizeWindow('Bird Detection', DISPLAY_WIDTH, display_image.shape[0])
-                    cv2.waitKey(1)
-                
-                if bird_analysis["contains_bird"]:
-                    log("Bird detected! Saving image...")  # Always print detection
-                    save_image(image)
-                    save_image(display_image_mark, target_dir=SAVE_CAT_DIR, suffix=".cat")
-                else:
-                    log("No birds detected", verbose_only=True, args=args)
-            else:
-                log(f"Image too blurry (variance: {blur_analysis['variance']:.2f}), skipping", verbose_only=True, args=args)
+                log("Saving clear image with bird...")
+                save_image(image)
+                if DO_SAVE_CAT:
+                    save_image(display_image_marked, target_dir=SAVE_CAT_DIR, suffix=".cat")
+        else:
+            log("No birds detected", verbose_only=True, args=args)
         checks_performed += 1
         is_last_check = args.checks is not None and checks_performed >= args.checks
 
