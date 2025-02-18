@@ -4,13 +4,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-IMAGE_FOLDER = "captured_birds"  # Directory to store images
-IMAGE_CAT_FOLDER = "captured_birds_cat"
+IMAGE_FOLDER = "../storage"  # Directory to store images
+IMAGE_CAT_FOLDER = "../storage.cat"
 GALLERY_PORT = int(os.getenv("GALLERY_PORT", "5000"))
-
-# Ensure the image folder exists
-if not os.path.exists(IMAGE_FOLDER):
-    os.makedirs(IMAGE_FOLDER)
 
 def get_image_files(page=1, per_page=12, cat=False):
     """Get paginated list of image files from the image folder
@@ -22,19 +18,22 @@ def get_image_files(page=1, per_page=12, cat=False):
     Returns:
         tuple: (list of image filenames for current page, total number of images)
     """
-    # Get all images and sort by modification time (newest first)
+    # Get all images and sort by relative path
     image_dir = IMAGE_CAT_FOLDER if cat else IMAGE_FOLDER
-    all_images = [(img, os.path.getmtime(os.path.join(image_dir, img))) 
-                 for img in os.listdir(image_dir)
-                 if img.endswith(('png', 'jpg', 'jpeg', 'gif', 'webp'))]
-    all_images.sort(key=lambda x: x[1], reverse=True)
-    all_images = [img[0] for img in all_images]  # Extract just the filenames
+    all_images = []
     
+    for root, _, files in os.walk(image_dir):
+        for file in files:
+            if file.endswith(('png', 'jpg', 'jpeg', 'gif', 'webp')):
+                relative_path = os.path.relpath(os.path.join(root, file), image_dir)
+                all_images.append((relative_path, os.path.getmtime(os.path.join(root, file))))
+    
+    all_images.sort(key=lambda x: x[0])  # Sort by relative path
     total_images = len(all_images)
     start_idx = (page - 1) * per_page
     end_idx = start_idx + per_page
     
-    return all_images[start_idx:end_idx], total_images
+    return [img[0] for img in all_images[start_idx:end_idx]], total_images
 
 @app.route('/')
 def gallery():
