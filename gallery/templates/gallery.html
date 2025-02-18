@@ -30,10 +30,16 @@
             flex-wrap: wrap;
             justify-content: center; /* Center align the gallery items */
         }
-        .gallery img {
+        .gallery-item {
+            text-align: center; /* Center align the image and info */
             margin: 10px; /* Add some space between images */
+        }
+        .gallery img {
             border: 2px solid #ddd; /* Optional: Add a border around images */
             border-radius: 5px; /* Optional: Round the corners of the images */
+        }
+        .image-info {
+            margin: 5px 0; /* Add some space above and below the text */
         }
         .navigation {
             text-align: center;
@@ -93,10 +99,13 @@
     </div>
     
     <div class="gallery">
-        {% for image in images %}
-            <a data-fslightbox="gallery" href="{{url_for('serve_image_cat' if cat else 'serve_image', filename=image)}}">
-              <img src="{{ url_for('serve_image_cat' if cat else 'serve_image', filename=image) }}" alt="{{ image }}" width="350">
-            </a>
+        {% for image, note in images_w_notes %}
+            <div class="gallery-item">
+                <a data-fslightbox="gallery" href="{{url_for('serve_image_cat' if cat else 'serve_image', filename=image)}}">
+                  <img src="{{ url_for('serve_image_cat' if cat else 'serve_image', filename=image) }}" alt="{{ image }}" width="350">
+                </a>
+                <div class="image-info">{{ note }}</div> <!-- Display the image filename as date and time -->
+            </div>
         {% endfor %}
     </div>
     

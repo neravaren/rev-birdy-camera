@@ -1,6 +1,8 @@
 from flask import Flask, render_template, send_from_directory, request
 import os
 from dotenv import load_dotenv
+from datetime import datetime
+
 load_dotenv()
 
 app = Flask(__name__)
@@ -76,6 +78,17 @@ def get_images_from_directory(directory):
             for root, _, files in os.walk(directory)
             for file in files if file.endswith('.jpg')]
 
+def get_notes(image_path):
+    # Parse the image path to extract the date and time
+    path_parts = image_path.split('/')
+    if len(path_parts) == 4:  # Expecting <year>/<month>/<day>/<time>.jpg
+        time_str = path_parts[-1].replace('.jpg', '')
+        date_str = f"{path_parts[0]}-{path_parts[1]}-{path_parts[2]} {time_str}"
+        # Convert to datetime object
+        dt = datetime.strptime(date_str, "%Y-%m-%d %H%M%S")
+        return dt.strftime("%Y-%m-%d %H:%M:%S")
+    return "No date available"
+
 @app.route('/')
 def gallery():
     year = request.args.get('year')
@@ -91,9 +104,11 @@ def gallery():
     start_idx = (page - 1) * IMAGES_PER_PAGE
     end_idx = start_idx + IMAGES_PER_PAGE
     paginated_images = images[start_idx:end_idx]
+    images_w_notes = [(x, get_notes(x)) for x in paginated_images]
 
-    return render_template('gallery.html', 
+    return render_template('gallery.html',
                          images=paginated_images,
+                         images_w_notes=images_w_notes,
                          years=years,
                          months=months,
                          days=days,
