@@ -7,48 +7,101 @@ app = Flask(__name__)
 IMAGE_FOLDER = "../storage"  # Directory to store images
 IMAGE_CAT_FOLDER = "../storage.cat"
 GALLERY_PORT = int(os.getenv("GALLERY_PORT", "5000"))
+IMAGES_PER_PAGE = 50  # Number of images to display per page
 
-def get_image_files(page=1, per_page=12, cat=False):
-    """Get paginated list of image files from the image folder
+def get_image_files(year=None, month=None, day=None):
+    """Get list of image files based on year, month, and day
     
     Args:
-        page (int): Page number (1-based indexing)
-        per_page (int): Number of images per page
+        year (str): Year to filter images
+        month (str): Month to filter images
+        day (str): Day to filter images
         
     Returns:
-        tuple: (list of image filenames for current page, total number of images)
+        tuple: (list of image filenames, list of years, list of months, list of days)
     """
-    # Get all images and sort by relative path
-    image_dir = IMAGE_CAT_FOLDER if cat else IMAGE_FOLDER
     all_images = []
-    
-    for root, _, files in os.walk(image_dir):
-        for file in files:
-            if file.endswith(('png', 'jpg', 'jpeg', 'gif', 'webp')):
-                relative_path = os.path.relpath(os.path.join(root, file), image_dir)
-                all_images.append((relative_path, os.path.getmtime(os.path.join(root, file))))
-    
-    all_images.sort(key=lambda x: x[0])  # Sort by relative path
-    total_images = len(all_images)
-    start_idx = (page - 1) * per_page
-    end_idx = start_idx + per_page
-    
-    return [img[0] for img in all_images[start_idx:end_idx]], total_images
+    years = []
+    months = []
+    days = []
+
+    if year and month and day:
+        all_images, months, days = get_images_by_date(year, month, day)
+    elif year and month:
+        all_images, months, days = get_images_by_month(year, month)
+    elif year:
+        all_images, months, years = get_images_by_year(year)
+    else:
+        all_images, years = get_all_images()
+
+    return sorted(all_images, reverse=True), sorted(years), sorted(months), sorted(days)
+
+def get_images_by_date(year, month, day):
+    target_dir = os.path.join(IMAGE_FOLDER, year, month, day)
+    return get_images_from_directory(target_dir), [], []
+
+def get_images_by_month(year, month):
+    target_dir = os.path.join(IMAGE_FOLDER, year, month)
+    all_images = []
+    days = []
+
+    for root, dirs, _ in os.walk(target_dir):
+        for dir in sorted(dirs):
+            day_dir = os.path.join(target_dir, dir)
+            days.append(os.path.basename(day_dir))
+            all_images.extend(get_images_from_directory(day_dir))
+
+    return all_images, [], sorted(days)
+
+def get_images_by_year(year):
+    target_dir = os.path.join(IMAGE_FOLDER, year)
+    all_images = []
+    months = []
+
+    for month_dir in sorted(os.listdir(target_dir)):
+        month_path = os.path.join(target_dir, month_dir)
+        if os.path.isdir(month_path):
+            months.append(month_dir)
+            all_images.extend(get_images_from_directory(month_path))
+
+    return all_images, sorted(months), []
+
+def get_all_images():
+    all_images = get_images_from_directory(IMAGE_FOLDER)
+    years = sorted(os.listdir(IMAGE_FOLDER))
+    return all_images, years
+
+def get_images_from_directory(directory):
+    return [os.path.relpath(os.path.join(root, file), IMAGE_FOLDER)
+            for root, _, files in os.walk(directory)
+            for file in files if file.endswith('.jpg')]
 
 @app.route('/')
 def gallery():
+    year = request.args.get('year')
+    month = request.args.get('month')
+    day = request.args.get('day')
     page = int(request.args.get('page', 1))
-    per_page = int(request.args.get('per_page', 50))
-    cat = request.args.get('cat', "False").lower() == "true"
-    
-    images, total = get_image_files(page, per_page, cat=cat)
-    total_pages = (total + per_page - 1) // per_page
-    
+
+    images, years, months, days = get_image_files(year, month, day)
+
+    # Pagination logic
+    total_images = len(images)
+    total_pages = (total_images + IMAGES_PER_PAGE - 1) // IMAGES_PER_PAGE
+    start_idx = (page - 1) * IMAGES_PER_PAGE
+    end_idx = start_idx + IMAGES_PER_PAGE
+    paginated_images = images[start_idx:end_idx]
+
     return render_template('gallery.html', 
-                         images=images,
+                         images=paginated_images,
+                         years=years,
+                         months=months,
+                         days=days,
+                         current_year=year,
+                         current_month=month,
+                         current_day=day,
                          current_page=page,
-                         total_pages=total_pages,
-                         cat=cat)
+                         total_pages=total_pages)
 
 @app.route('/images/<path:filename>')
 def serve_image(filename):

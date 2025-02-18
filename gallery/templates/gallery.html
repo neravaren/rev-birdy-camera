@@ -4,29 +4,113 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Gallery</title>
+    <style>
+        .pagination {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .pagination a {
+            display: inline-block;
+            padding: 10px 15px;
+            margin: 0 5px;
+            background-color: #007BFF;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .pagination a:hover {
+            background-color: #0056b3;
+        }
+        .pagination span {
+            margin: 0 10px;
+            font-weight: bold;
+        }
+        .gallery {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center; /* Center align the gallery items */
+        }
+        .gallery img {
+            margin: 10px; /* Add some space between images */
+            border: 2px solid #ddd; /* Optional: Add a border around images */
+            border-radius: 5px; /* Optional: Round the corners of the images */
+        }
+        .navigation {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .navigation button {
+            padding: 10px 15px;
+            margin: 0 5px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .navigation button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-    <h1><a href="/">Image Gallery</a></h1>
+    <h1 class="navigation"><a href="/">Image Gallery</a></h1>
+    <div class="navigation">
+        {% if years %}
+            <h2>Years</h2>
+            {% for year in years %}
+                <button onclick="location.href='{{ url_for('gallery', year=year) }}'">{{ year }}</button>
+            {% endfor %}
+        {% endif %}
+        
+        {% if months %}
+            <h2>Months</h2>
+            {% for month in months %}
+                <button onclick="location.href='{{ url_for('gallery', year=current_year, month=month) }}'">{{ month }}</button>
+            {% endfor %}
+        {% endif %}
+        
+        {% if days %}
+            <h2>Days</h2>
+            {% for day in days %}
+                <button onclick="location.href='{{ url_for('gallery', year=current_year, month=current_month, day=day) }}'">{{ day }}</button>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <div class="pagination">
+        {% if current_page is defined and total_pages is defined %}
+            {% if current_page > 1 %}
+                <a href="{{ url_for('gallery', year=current_year, month=current_month, day=current_day, page=current_page-1) }}">Previous</a>
+            {% endif %}
+            
+            <span>Page {{ current_page }} of {{ total_pages }}</span>
+            
+            {% if current_page < total_pages %}
+                <a href="{{ url_for('gallery', year=current_year, month=current_month, day=current_day, page=current_page+1) }}">Next</a>
+            {% endif %}
+        {% endif %}
+    </div>
+    
     <div class="gallery">
         {% for image in images %}
             <a data-fslightbox="gallery" href="{{url_for('serve_image_cat' if cat else 'serve_image', filename=image)}}">
               <img src="{{ url_for('serve_image_cat' if cat else 'serve_image', filename=image) }}" alt="{{ image }}" width="350">
             </a>
-            <!-- <a data-fslightbox="gallery" href="images/{{image}}">
-                <img src="images/{{image}}" alt="{{ image }}" width="350">
-            </a> -->
         {% endfor %}
     </div>
     
     <div class="pagination">
-        {% if current_page > 1 %}
-            <a href="{{ url_for('gallery', page=current_page-1, cat=cat) }}">Previous</a>
-        {% endif %}
-        
-        <span>Page {{ current_page }} of {{ total_pages }}</span>
-        
-        {% if current_page < total_pages %}
-            <a href="{{ url_for('gallery', page=current_page+1, cat=cat) }}">Next</a>
+        {% if current_page is defined and total_pages is defined %}
+            {% if current_page > 1 %}
+                <a href="{{ url_for('gallery', year=current_year, month=current_month, day=current_day, page=current_page-1) }}">Previous</a>
+            {% endif %}
+            
+            <span>Page {{ current_page }} of {{ total_pages }}</span>
+            
+            {% if current_page < total_pages %}
+                <a href="{{ url_for('gallery', year=current_year, month=current_month, day=current_day, page=current_page+1) }}">Next</a>
+            {% endif %}
         {% endif %}
     </div>
 </body>
