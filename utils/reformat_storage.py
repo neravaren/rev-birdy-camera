@@ -18,7 +18,7 @@ def reformat_storage(captured_birds_dir, storage_dir, dry_run, suffix=""):
                 year = dt.strftime("%Y")
                 month = dt.strftime("%m")
                 day = dt.strftime("%d")
-                time = dt.strftime("%H-%M-%S")
+                time = dt.strftime("%H%M%S")
 
                 # Create target directory
                 target_dir = os.path.join(storage_dir, f"{year}", f"{month}", f"{day}")

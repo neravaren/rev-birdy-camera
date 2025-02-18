@@ -13,8 +13,8 @@ load_dotenv()
 
 # Configuration
 ESP32_CAMERA_URL = os.getenv("ESP32_CAMERA_URL", "http://10.2.1.146/capture")
-SAVE_DIR = os.getenv("SAVE_DIR", "captured_birds")
-SAVE_CAT_DIR = os.getenv("SAVE_CAT_DIR", "captured_birds_cat")
+SAVE_DIR = os.getenv("SAVE_DIR", "storage")
+SAVE_CAT_DIR = os.getenv("SAVE_CAT_DIR", "storage.cat")
 BLUR_THRESHOLD = float(os.getenv("BLUR_THRESHOLD", "50"))
 CAPTURE_INTERVAL = int(os.getenv("CAPTURE_INTERVAL", "5"))
 BIRD_INTERVAL = int(os.getenv("BIRD_INTERVAL", "5"))
@@ -72,12 +72,22 @@ def draw_detections(image, results):
             (label_width, label_height), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
             cv2.rectangle(annotated_image, (x1, y1-label_height-5), (x1+label_width, y1), color, -1)
             cv2.putText(annotated_image, label, (x1, y1-5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-    
+
     return annotated_image
 
 def save_image(image, target_dir=SAVE_DIR, suffix=""):
-    """Save image with timestamp."""
-    filename = os.path.join(target_dir, f"bird_{int(time.time())}{suffix}.jpg")
+    """Save image with timestamp in a structured directory format."""
+    now = datetime.now()
+    year = now.strftime("%Y")
+    month = now.strftime("%m")
+    day = now.strftime("%d")
+    time_str = now.strftime("%H%M%S")
+
+    # Create directory structure
+    dir_path = os.path.join(target_dir, year, month, day)
+    os.makedirs(dir_path, exist_ok=True)
+
+    filename = os.path.join(dir_path, f"{time_str}{suffix}.jpg")
     cv2.imwrite(filename, image)
     print(f"Saved: {filename}")
 
