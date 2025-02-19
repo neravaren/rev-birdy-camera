@@ -9,6 +9,7 @@ app = Flask(__name__)
 IMAGE_FOLDER = "../storage"  # Directory to store images
 IMAGE_CAT_FOLDER = "../storage.cat"
 GALLERY_PORT = int(os.getenv("GALLERY_PORT", "5000"))
+GALLERY_DEBUG = os.getenv("GALLERY_DEBUG", "True").lower() == "true"
 IMAGES_PER_PAGE = 50  # Number of images to display per page
 
 def get_image_files(year=None, month=None, day=None):
@@ -91,10 +92,18 @@ def get_notes(image_path):
 
 @app.route('/')
 def gallery():
+    now = datetime.now()
+    select = request.args.get('select', None)
     year = request.args.get('year')
     month = request.args.get('month')
     day = request.args.get('day')
     page = int(request.args.get('page', 1))
+
+    if not year and not month and not day and select is None:
+        # Show today images by default
+        year = now.strftime("%Y")
+        month = now.strftime("%m")
+        day = now.strftime("%d")
 
     images, years, months, days = get_image_files(year, month, day)
 
@@ -127,4 +136,4 @@ def serve_image_cat(filename):
     return send_from_directory(IMAGE_CAT_FOLDER, filename)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=GALLERY_PORT, debug=True)
+    app.run(host='0.0.0.0', port=GALLERY_PORT, debug=GALLERY_DEBUG)
