@@ -28,7 +28,7 @@ def reformat_storage(captured_birds_dir, storage_dir, dry_run, suffix=""):
 
                 # Move and rename the file
                 source_path = os.path.join(captured_birds_dir, filename)
-                target_path = os.path.join(target_dir, f"{time}{suffix}.jpg")
+                target_path = os.path.join(target_dir, f"{time}.jpg")
 
                 if dry_run:
                     print(f"Would move {filename} to {target_path}")

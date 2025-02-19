@@ -87,7 +87,7 @@ def save_image(image, target_dir=SAVE_DIR, suffix=""):
     dir_path = os.path.join(target_dir, year, month, day)
     os.makedirs(dir_path, exist_ok=True)
 
-    filename = os.path.join(dir_path, f"{time_str}{suffix}.jpg")
+    filename = os.path.join(dir_path, f"{time_str}.jpg")
     cv2.imwrite(filename, image)
     print(f"Saved: {filename}")
 
